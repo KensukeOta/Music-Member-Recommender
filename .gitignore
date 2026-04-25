@@ -12,3 +12,5 @@ wheels/
 .env
 
 .ipynb_checkpoints
+
+.ruff_cache
