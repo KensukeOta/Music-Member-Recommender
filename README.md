@@ -34,14 +34,14 @@
 
 以下の特徴量を用いてスコアリングを行います。
 
-| 特徴量 | 手法 |
-|---|---|
-| ジャンル | Jaccard類似度 |
-| 活動頻度 | 完全一致 |
-| 活動目的 | 完全一致 |
-| スキルレベル | 完全一致 |
-| 活動可能日 | Jaccard類似度 |
-| 自己紹介文 | TF-IDF + Cosine類似度 |
+| 特徴量       | 手法                  |
+| ------------ | --------------------- |
+| ジャンル     | Jaccard類似度         |
+| 活動頻度     | 完全一致              |
+| 活動目的     | 完全一致              |
+| スキルレベル | 完全一致              |
+| 活動可能日   | Jaccard類似度         |
+| 自己紹介文   | TF-IDF + Cosine類似度 |
 
 最終スコアは重み付きで計算します。
 
@@ -52,3 +52,134 @@ score = 0.35 * genre
       + 0.10 * skill
       + 0.10 * available_days
       + 0.05 * bio
+```
+
+### 設計方針
+
+- 地域は「類似度」ではなくフィルタとして扱う
+- ユーザーが納得できるよう推薦理由を返す
+
+---
+
+## API仕様
+
+### エンドポイント
+
+```text
+GET /users/{user_id}/recommendations
+```
+
+### クエリパラメータ
+
+| パラメータ         | 型   | デフォルト | 説明                   |
+| ------------------ | ---- | ---------- | ---------------------- |
+| top_k              | int  | 5          | 取得件数（1〜20）      |
+| same_location_only | bool | true       | 同一地域のみ推薦するか |
+
+### レスポンス例
+
+```json
+[
+  {
+    "user_id": 2,
+    "name": "GoodMatch",
+    "age": 27,
+    "location": "Osaka",
+    "instrument": "bass",
+    "genres": "rock,pop",
+    "skill_level": "intermediate",
+    "purpose": "cover_band",
+    "frequency": "weekly",
+    "available_days": "saturday",
+    "score": 0.87,
+    "reasons": [
+      "共通ジャンル: rock, pop",
+      "活動頻度が一致",
+      "活動目的が一致",
+      "スキルレベルが近い",
+      "活動地域が一致"
+    ]
+  }
+]
+```
+
+### ステータスコード
+
+| ステータス | 説明                 |
+| ---------- | -------------------- |
+| 200        | 正常                 |
+| 404        | ユーザーが存在しない |
+| 422        | パラメータエラー     |
+
+---
+
+## セットアップ
+
+```bash
+cd backend
+uv sync
+```
+
+---
+
+## サーバー起動
+
+```bash
+uv run uvicorn app.main:app --reload
+```
+
+ブラウザで以下にアクセスします。
+
+```text
+http://127.0.0.1:8000/docs
+```
+
+---
+
+## テスト
+
+```bash
+uv run pytest
+```
+
+---
+
+## プロジェクト構成
+
+```text
+.
+├── backend
+│   ├── app
+│   │   ├── main.py
+│   │   ├── recommender.py
+│   │   ├── schemas.py
+│   │   └── data
+│   ├── tests
+│   └── pyproject.toml
+├── notebooks
+│   └── eda.ipynb
+├── scripts
+│   └── generate_dummy_users.py
+└── docs
+    └── portfolio.md
+```
+
+---
+
+## 工夫点
+
+- EDAに基づいた特徴量設計
+- 重み付きスコアリングによる柔軟な推薦
+- 推薦理由の可視化
+- APIとして利用可能な構成
+- pytestによるテスト実装
+
+---
+
+## 今後の改善
+
+- 協調フィルタリングの導入
+- ユーザー行動データの活用
+- 学習ベースのランキングモデル（Learning to Rank）
+- フロントエンドの実装
+- Dockerによる本番環境構築
